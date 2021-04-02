@@ -314,18 +314,22 @@ def run_repo_update(module, command):
     rc, out, err = run_helm(module, repo_update_command)
 
 
-def fetch_chart_info(module, command, chart_ref):
+def fetch_chart_info(module, command, skip_tls_verify, chart_ref):
     """
     Get chart info
     """
-    inspect_command = command + " show chart " + chart_ref
+    inspect_command = command + " show chart"
 
+    if skip_tls_verify:
+        inspect_command = inspect_command + " --insecure-skip-tls-verify"
+
+    inspect_command = inspect_command + " " + chart_ref
     rc, out, err = run_helm(module, inspect_command)
 
     return yaml.safe_load(out)
 
 
-def deploy(command, release_name, release_values, chart_name, wait,
+def deploy(command, skip_tls_verify, release_name, release_values, chart_name, wait,
            wait_timeout, disable_hook, force, values_files, atomic=False,
            create_namespace=False, replace=False, skip_crds=False):
     """
@@ -372,6 +376,9 @@ def deploy(command, release_name, release_values, chart_name, wait,
 
     if skip_crds:
         deploy_command += " --skip-crds"
+
+    if skip_tls_verify:
+         deploy_command += " --insecure-skip-tls-verify"
 
     deploy_command += " " + release_name + " " + chart_name
 
@@ -574,14 +581,11 @@ def main():
         if chart_repo_url is not None:
             helm_cmd += " --repo=" + chart_repo_url
 
-        if skip_tls_verify:
-            helm_cmd += " --insecure-skip-tls-verify"
-
         # Fetch chart info to have real version and real name for chart_ref from archive, folder or url
-        chart_info = fetch_chart_info(module, helm_cmd, chart_ref)
+        chart_info = fetch_chart_info(module, helm_cmd, skip_tls_verify, chart_ref)
 
         if release_status is None:  # Not installed
-            helm_cmd = deploy(helm_cmd, release_name, release_values, chart_ref, wait, wait_timeout,
+            helm_cmd = deploy(helm_cmd, skip_tls_verify, release_name, release_values, chart_ref, wait, wait_timeout,
                               disable_hook, False, values_files=values_files, atomic=atomic,
                               create_namespace=create_namespace, replace=replace,
                               skip_crds=skip_crds)
@@ -598,7 +602,7 @@ def main():
                 would_change = default_check(release_status, chart_info, release_values, values_files)
 
             if force or would_change:
-                helm_cmd = deploy(helm_cmd, release_name, release_values, chart_ref, wait, wait_timeout,
+                helm_cmd = deploy(helm_cmd, skip_tls_verify, release_name, release_values, chart_ref, wait, wait_timeout,
                                   disable_hook, force, values_files=values_files, atomic=atomic,
                                   create_namespace=create_namespace, replace=replace,
                                   skip_crds=skip_crds)
