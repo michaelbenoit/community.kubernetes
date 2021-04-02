@@ -544,6 +544,7 @@ def main():
     create_namespace = module.params.get('create_namespace')
     replace = module.params.get('replace')
     skip_crds = module.params.get('skip_crds')
+    skip_tls_verify = module.params.get('skip_tls_verify')
 
     if bin_path is not None:
         helm_cmd_common = bin_path
@@ -571,6 +572,9 @@ def main():
 
         if chart_repo_url is not None:
             helm_cmd += " --repo=" + chart_repo_url
+
+        if skip_tls_verify:
+            helm_cmd += " --insecure-skip-tls-verify"
 
         # Fetch chart info to have real version and real name for chart_ref from archive, folder or url
         chart_info = fetch_chart_info(module, helm_cmd, chart_ref)
