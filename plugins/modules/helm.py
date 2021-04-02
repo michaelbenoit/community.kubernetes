@@ -499,6 +499,7 @@ def main():
             create_namespace=dict(type='bool', default=False),
             replace=dict(type='bool', default=False),
             skip_crds=dict(type='bool', default=False),
+            skip_tls_verify=dict(type='bool', default=False),
 
             # Generic auth key
             host=dict(type='str', fallback=(env_fallback, ['K8S_AUTH_HOST'])),
